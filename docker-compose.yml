@@ -1,0 +1,38 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: sograce_crm_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: sograce_crm
+      POSTGRES_USER: sograce
+      POSTGRES_PASSWORD: sograce_password_change_me
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  redis:
+    image: redis:7
+    container_name: sograce_crm_redis
+    restart: always
+    ports:
+      - "6379:6379"
+
+  backend:
+    build: ./backend
+    container_name: sograce_crm_backend
+    restart: always
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      DATABASE_URL: postgresql+psycopg2://sograce:sograce_password_change_me@postgres:5432/sograce_crm
+      REDIS_URL: redis://redis:6379/0
+      SECRET_KEY: change-this-secret-key
+    ports:
+      - "8000:8000"
+
+volumes:
+  postgres_data:
